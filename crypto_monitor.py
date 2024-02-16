@@ -1,100 +1,105 @@
+import os
 import requests
 import time
+from collections import deque
 from datetime import datetime, timedelta
 
-# REPLACE WITH YOUR TELEGRAM BOT TOKEN AND CHAT ID
-TELEGRAM_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'    # Replace with your Telegram bot token
-TELEGRAM_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID'    # Replace with your Telegram chat ID
+# Get the Telegram bot token and chat ID from environment variables
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-# Listed Cryptocurrencies (No change needed)
+# List of cryptocurrencies to monitor
 CURRENCY_IDS = [
     'bitcoin',
     'dogecoin',
     'ethereum',
-    # ... the rest of your listed currencies ...
+    'uniswap',
+    'shiba-inu',
+    'ripple',
+    'binancecoin',
+    'cardano',
+    'worldcoin',
+    'solana',
+    'avalanche-2',
+    'polkadot',
 ]
 
-# Cryptocurrency price API URL (no need to change)
-API_URL = 'https://api.coingecko.com/api/v3/simple/price'
-
-# Set price alert thresholds
+# Set up the price threshold alerts and percent change thresholds
 PRICE_ALERTS = {
-    'bitcoin': {'low': 10000, 'high': 60000, 'percent_change': 5},
-    'dogecoin': {'low': 0.01, 'high': 0.50, 'percent_change': 10},
-    # ... add your other currencies with their thresholds ...
+    'bitcoin': {'low': 20000, 'high': 60000, 'percent_change': 5},
+    # ... add other currencies with their low, high, and percentage change thresholds ...
 }
 
-# Dictionary to store the price record
-price_records = {currency: {'last_checked': None, 'last_price': None} for currency in CURRENCY_IDS}
+# Price API URL (CoinGecko as an example)
+API_URL = 'https://api.coingecko.com/api/v3/simple/price'
+
+# Initialize price records with a deque to maintain a 5-minute window of price checks
+price_data = {currency: deque(maxlen=5) for currency in CURRENCY_IDS}
 
 # Function to fetch current prices
-def get_crypto_prices():
-    ids = ','.join(CURRENCY_IDS)
-    url = f"{API_URL}?ids={ids}&vs_currencies=usd"
-    response = requests.get(url)
-    prices = response.json()
-    return {currency: prices[currency]['usd'] for currency in CURRENCY_IDS}
+def get_crypto_prices(ids):
+    query_params = {
+        'ids': ','.join(ids),
+        'vs_currencies': 'usd',
+    }
+    response = requests.get(API_URL, params=query_params)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise ValueError("Error fetching prices")
 
 # Function to send a message via Telegram
 def send_telegram_message(message):
     url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
-    data = {
+    payload = {
         'chat_id': TELEGRAM_CHAT_ID,
         'text': message,
-        'parse_mode': 'Markdown'
+        'parse_mode': 'Markdown',
     }
-    requests.post(url, data=data)
+    response = requests.post(url, json=payload)
+    if response.status_code != 200:
+        raise ValueError("Error sending message")
 
-# Main function for monitoring and alerting
+# Check the price change over the last 5 minutes
+def check_price_change(currency, prices):
+    if len(prices) == prices.maxlen:
+        earliest_price = prices[0]['price']
+        latest_price = prices[-1]['price']
+        percent_change = (latest_price - earliest_price) / earliest_price * 100
+        return percent_change
+    return 0  # Not enough data to calculate change
+
+# Function to check prices and notify if needed
+def check_prices_and_notify():
+    current_prices = get_crypto_prices(CURRENCY_IDS)
+
+    for currency in CURRENCY_IDS:
+        current_price = current_prices[currency]['usd']
+        current_time = datetime.utcnow()
+        
+        # Check high and low thresholds
+        if current_price <= PRICE_ALERTS[currency]['low']:
+            send_telegram_message(f"{currency.upper()} price is below alert threshold: ${current_price}")
+        elif current_price >= PRICE_ALERTS[currency]['high']:
+            send_telegram_message(f"{currency.upper()} price is above alert threshold: ${current_price}")
+        
+        # Record the current price with timestamp
+        price_data[currency].append({'time': current_time, 'price': current_price})
+        
+        # Calculate percentage change
+        percent_change = check_price_change(currency, price_data[currency])
+        if abs(percent_change) >= PRICE_ALERTS[currency]['percent_change']:
+            send_telegram_message(f"{currency.upper()} price changed by {percent_change:.2f}% in the last 5 minutes")
+
+# Main script function
 def main():
     while True:
         try:
-            # Fetch new prices
-            current_prices = get_crypto_prices()
-            now = datetime.utcnow()
-
-            # Check each currency for price alerts and changes
-            for currency in CURRENCY_IDS:
-                price_info = price_records[currency]
-                last_price = price_info['last_price']
-                current_price = current_prices[currency]
-                percent_change = 0
-                send_message = False
-                message = ""
-
-                # Check percentage price change if we have a last price
-                if last_price:
-                    percent_change = ((current_price - last_price) / last_price) * 100
-                    if abs(percent_change) >= PRICE_ALERTS[currency]['percent_change']:
-                        direction = 'increased' if percent_change > 0 else 'decreased'
-                        message += f"{currency.capitalize()} price has {direction} by {abs(percent_change):.2f}% over the last 5 minutes. "
-                        send_message = True
-
-                # Check if price is below the low alert threshold
-                if current_price <= PRICE_ALERTS[currency]['low']:
-                    message += f"Current price of {currency.capitalize()} is below the alert threshold at ${current_price:.2f}! "
-                    send_message = True
-
-                # Check if price is above the high alert threshold
-                if current_price >= PRICE_ALERTS[currency]['high']:
-                    message += f"Current price of {currency.capitalize()} is above the alert threshold at ${current_price:.2f}! "
-                    send_message = True
-
-                if send_message:
-                    send_telegram_message(message)
-
-                # Update last checked time and price
-                price_info['last_checked'] = now
-                price_info['last_price'] = current_price
-
-            # Sleep for 5 minutes before the next check
-            time.sleep(300)
-
+            check_prices_and_notify()
+            time.sleep(60)  # Check every minute
         except Exception as e:
             print(f"An error occurred: {e}")
-            # Sleep for a short time before retrying
-            time.sleep(60)
+            time.sleep(60)  # Wait a minute and try again
 
-# Run the main monitoring function
 if __name__ == '__main__':
     main()
