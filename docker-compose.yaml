@@ -1,7 +1,7 @@
-version: '3.3'
-
+# docker-compose.yml file
+version: '3.8'
 services:
   crypto_monitor:
     build: .
-    container_name: crypto_monitor
-    restart: unless-stopped
+    env_file:
+      - .env
