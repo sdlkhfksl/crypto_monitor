@@ -1,0 +1,7 @@
+version: '3.3'
+
+services:
+  crypto_monitor:
+    build: .
+    container_name: crypto_monitor
+    restart: unless-stopped
