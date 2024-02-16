@@ -31,8 +31,15 @@ USER_ALERTS = {
     'bitcoin': {'increase': 5, 'decrease': 5},
     'dogecoin': {'increase': 10, 'decrease': 10},
     'ethereum': {'increase': 3, 'decrease': 3},
-    # Add other currencies with their thresholds
+    'uniswap': {'increase': 5, 'decrease': 5},
+    'shiba-inu': {'increase': 5, 'decrease': 5},
+    'ripple': {'increase': 5, 'decrease': 5},
+    'binancecoin': {'increase': 5, 'decrease': 5},
+    'cardano': {'increase': 5, 'decrease': 5},
     'worldcoin': {'increase': 8, 'decrease': 7},
+    'solana': {'increase': 8, 'decrease': 7},
+    'avalanche-2': {'increase': 8, 'decrease': 7},
+    'polkadot': {'increase': 8, 'decrease': 7},
     # Add other currencies with their thresholds
 }
 
