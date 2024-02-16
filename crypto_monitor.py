@@ -26,7 +26,18 @@ CURRENCY_IDS = [
 
 # Set up the price threshold alerts and percent change thresholds
 PRICE_ALERTS = {
-    'bitcoin': {'low': 20000, 'high': 60000, 'percent_change': 5},
+    'bitcoin': {'low': 39000, 'high': 50000, 'percent_change': 5},
+    'dogecoin': {'low': 0.07, 'high': 0.1, 'percent_change': 5},
+    'ethereum': {'low': 1700, 'high': 2500, 'percent_change': 5},
+    'uniswap': {'low': 4.2, 'high': 6, 'percent_change': 5},
+    'shiba-inu': {'low': 0.0000085, 'high': 0.00001, 'percent_change': 5},
+    'ripple': {'low': 0.3, 'high': 0.5, 'percent_change': 5},
+    'binancecoin': {'low': 210, 'high': 300, 'percent_change': 5},
+    'cardano': {'low': 0.42, 'high': 0.6, 'percent_change': 5},
+    'worldcoin': {'low': 1.9, 'high': 3, 'percent_change': 5},
+    'solana': {'low': 24, 'high': 111, 'percent_change': 5},
+    'avalanche-2': {'low': 10, 'high': 40, 'percent_change': 5},
+    'polkadot': {'low': 4, 'high': 7.7, 'percent_change': 5},
     # ... add other currencies with their low, high, and percentage change thresholds ...
 }
 
