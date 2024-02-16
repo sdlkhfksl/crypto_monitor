@@ -1,5 +1,5 @@
 # docker-compose.yml file
-version: '3.8'
+version: '3.3'
 services:
   crypto_monitor:
     build: .
