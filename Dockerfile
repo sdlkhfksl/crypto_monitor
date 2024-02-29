@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 指定容器启动时执行的命令
-CMD ["python", "./bot.py"]
+CMD ["python", "./crypto_monitor.py"]
