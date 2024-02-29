@@ -1,7 +1,14 @@
-# Dockerfile
-FROM python:3.8
+# 使用官方Python镜像
+FROM python:3.9-slim
+
+# 创建并设置工作目录
 WORKDIR /app
-COPY requirements.txt .
+
+# 复制本地代码到容器中
+COPY . /app
+
+# 安装requirements.txt文件中指定的依赖
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["python", "./crypto_monitor.py"]
+
+# 指定容器启动时执行的命令
+CMD ["python", "./bot.py"]
