@@ -1,12 +1,7 @@
-version: '3'
-
+# docker-compose.yml file
+version: '3.3'
 services:
-  bot:
+  crypto_monitor:
     build: .
-    container_name: crypto_price_monitor_bot
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-    volumes:
-      - .:/app
-    restart: always
+    env_file:
+      - .env
